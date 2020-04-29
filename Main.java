@@ -5,29 +5,61 @@ import java.util.*;
 abstract class Game {
 
     public void gameProcess() {
+        inputAction();
         inputCards();
         playGame();
     }
 
-    public abstract void inputCards();
+    public abstract void addCard();
+    public abstract void removeCard();
+    public abstract void importCard();
+    public abstract void exportCard();
+    public abstract void askCard();
+    public abstract void exit();
+
     public abstract void playGame();
 
 }
 
 class Flashcard extends Game {
 
+    String action = null;
     final Scanner sc = new Scanner(System.in);
-    int numCards;
-    //could be error, init with null
+
     Map<String, String> termDefinition = new LinkedHashMap<>();
     String  term;
     String  definition;
-    String [] answer;
+    //String [] answer;
+    ArrayList<String> answer = new ArrayList<>();
+
+    public void inputAction() {
+        System.out.println("Input the action (add, remove, import, export, ask, exit):");
+        String line = sc.nextLine();
+        line = line.toLowerCase();
+        action = line;
+
+        switch (action) {
+            case "add":
+                break;
+            case "remove":
+                break;
+            case "import":
+                break;
+            case "export":
+                break;
+            case "ask":
+                break;
+            case "exit":
+                break;
+            default:
+                System.out.println("Wrong action!");
+        }
+
+    }
 
     public Flashcard() {
-        System.out.println("Input the number of cards:");
-        this.numCards = Integer.parseInt(sc.nextLine());
-        answer = new String[numCards];
+
+
     }
 
 
@@ -57,12 +89,42 @@ class Flashcard extends Game {
     }
 
     @Override
+    public void addCard() {
+
+    }
+
+    @Override
+    public void removeCard() {
+
+    }
+
+    @Override
+    public void importCard() {
+
+    }
+
+    @Override
+    public void exportCard() {
+
+    }
+
+    @Override
+    public void askCard() {
+
+    }
+
+    @Override
+    public void exit() {
+
+    }
+
+    @Override
     public void playGame() {
         int i = 0;
         for (String term : termDefinition.keySet()) {
             //iterate over all keys (terms) and check answer
             System.out.printf("Print the definition of \"%s\":\n", term);
-            answer[i] = sc.nextLine();
+            answer.add(sc.nextLine());
             System.out.println(checkAnswer(i,term));
             i++;
         }
@@ -82,13 +144,13 @@ class Flashcard extends Game {
 
     private String checkAnswer(int i, String term) {
         String res = "";
-        if (answer[i].equals(termDefinition.get(term))) {
+        if (answer.get(i).equals(termDefinition.get(term))) {
             res = "Correct answer.";
         } else {
-            if (termDefinition.containsValue(answer[i])) {
+            if (termDefinition.containsValue(answer.get(i))) {
                 res = (String.format("Wrong answer. The correct one is \"%s\", you've just written the definition of \"%s\".",
                         termDefinition.get(term),
-                        getTermVal(answer[i])));
+                        getTermVal(answer.get(i))));
             } else {
                 res = String.format("Wrong answer. The correct one is \"%s\".", termDefinition.get(term));
             }
