@@ -1,5 +1,9 @@
 package flashcards;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 
@@ -29,7 +33,6 @@ class Flashcard extends Game {
     Map<String, String> termDefinition = new LinkedHashMap<>();
     String term;
     String definition;
-    //String [] answer;
     ArrayList<String> answer = new ArrayList<>();
 
     public void playGame() {
@@ -64,51 +67,71 @@ class Flashcard extends Game {
     }
 
 
-
     @Override
     public void addCard() {
         System.out.print("The card:\n");
-        do {
-            term = sc.nextLine();
-            if (termDefinition.containsKey(term)) {
-                System.out.println(String.format("The card \"%s\" already exists. Try again:", term));
-            }
-        } while ((termDefinition.containsKey(term)));
 
-        System.out.print("The definition of the card:\n");
-        do {
+        term = sc.nextLine();
+        if (termDefinition.containsKey(term)) {
+            System.out.println(String.format("The card \"%s\" already exists.", term));
+        } else {
+            System.out.print("The definition of the card:\n");
             definition = sc.nextLine();
             if (termDefinition.containsValue(definition)) {
-                System.out.println(String.format("The definition \"%s\" already exists. Try again:", definition));
+                System.out.println(String.format("The definition \"%s\" already exists.", definition));
+            } else {
+                termDefinition.put(term, definition);
+                System.out.printf("The pair (\"%s\":\"%s\") has been added.\n", term, definition);
             }
-        } while ((termDefinition.containsValue(definition)));
-
-        termDefinition.put(term, definition);
+        }
     }
 
     @Override
     public void removeCard() {
-        do {
+
             System.out.print("The card:\n");
             term = sc.nextLine();
             if (termDefinition.containsKey(term)) {
                 System.out.println("The card has been removed.");
                 termDefinition.remove(term);
-                break;
             } else {
-                System.out.printf("Can't remove \"%s\": there is no such card.", term);
+                System.out.printf("Can't remove \"%s\": there is no such card.\n", term);
             }
-        } while (true);
     }
 
     @Override
     public void importCard() {
-
+        System.out.println("File name:");
+        String pathToFile = sc.nextLine();
+        File file = new File(pathToFile);
+        int num = 0;
+        try (Scanner scanner = new Scanner(file)) {
+            while (scanner.hasNext()) {
+                String[] line = scanner.nextLine().split(":");
+                termDefinition.put(line[0], line[1]);
+                num++;
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("File not found.");
+        }
+        if (num > 0) System.out.printf("%d cards have been loaded.\n", num);
     }
 
     @Override
     public void exportCard() {
-
+        System.out.println("File name:");
+        String pathToFile = sc.nextLine();
+        File file = new File(pathToFile);
+        int num = 0;
+        try (FileWriter writer = new FileWriter(file)) {
+            for (var entry : termDefinition.entrySet()) {
+                writer.write(entry.getKey() + ":" + entry.getValue() + "\n");
+                num++;
+            }
+        } catch (IOException e) {
+            System.out.printf("An exception occurs %s", e.getMessage());
+        }
+        System.out.printf("%d cards have been saved\n", num);
     }
 
     @Override
@@ -131,7 +154,6 @@ class Flashcard extends Game {
     }
 
     private String getTermVal(String s) {
-
         for (var entry : termDefinition.entrySet()) {
             if (entry.getValue().equals(s)) {
                 return entry.getKey();
@@ -152,7 +174,6 @@ class Flashcard extends Game {
             } else {
                 res = String.format("Wrong answer. The correct one is \"%s\".", termDefinition.get(term));
             }
-
         }
         return res;
     }
@@ -160,9 +181,7 @@ class Flashcard extends Game {
 
 public class Main {
     public static void main(String[] args) {
-
         Flashcard game = new Flashcard();
         game.playGame();
-
     }
 }
