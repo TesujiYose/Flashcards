@@ -2,19 +2,19 @@ package flashcards;
 
 import java.util.*;
 
+
 abstract class Game {
 
-    public void gameProcess() {
-        inputAction();
-        inputCards();
-        playGame();
-    }
-
     public abstract void addCard();
+
     public abstract void removeCard();
+
     public abstract void importCard();
+
     public abstract void exportCard();
+
     public abstract void askCard();
+
     public abstract void exit();
 
     public abstract void playGame();
@@ -27,75 +27,78 @@ class Flashcard extends Game {
     final Scanner sc = new Scanner(System.in);
 
     Map<String, String> termDefinition = new LinkedHashMap<>();
-    String  term;
-    String  definition;
+    String term;
+    String definition;
     //String [] answer;
     ArrayList<String> answer = new ArrayList<>();
 
-    public void inputAction() {
-        System.out.println("Input the action (add, remove, import, export, ask, exit):");
-        String line = sc.nextLine();
-        line = line.toLowerCase();
-        action = line;
+    public void playGame() {
 
-        switch (action) {
-            case "add":
-                break;
-            case "remove":
-                break;
-            case "import":
-                break;
-            case "export":
-                break;
-            case "ask":
-                break;
-            case "exit":
-                break;
-            default:
-                System.out.println("Wrong action!");
-        }
-
-    }
-
-    public Flashcard() {
-
-
-    }
-
-
-    @Override
-    public void inputCards() {
-        for (int i = 0; i < numCards; i++) {
-
-            System.out.printf("The card #%d:\n", i+1);
-            do {
-                term = sc.nextLine();
-                if (termDefinition.containsKey(term)) {
-                    System.out.println(String.format("The card \"%s\" already exists. Try again:", term));
-                }
-            } while ((termDefinition.containsKey(term)));
-
-            System.out.printf("The definition of the card #%d:\n", i+1);
-            do {
-                definition = sc.nextLine();
-                if (termDefinition.containsValue(definition)) {
-                    System.out.println(String.format("The definition \"%s\" already exists. Try again:", definition));
-                }
-            } while ((termDefinition.containsValue(definition)));
-
-            termDefinition.put(term,definition);
-        }
+        do {
+            System.out.println("Input the action (add, remove, import, export, ask, exit):");
+            action = sc.nextLine().toLowerCase();
+            switch (action) {
+                case "add":
+                    addCard();
+                    break;
+                case "remove":
+                    removeCard();
+                    break;
+                case "import":
+                    importCard();
+                    break;
+                case "export":
+                    exportCard();
+                    break;
+                case "ask":
+                    askCard();
+                    break;
+                case "exit":
+                    exit();
+                    break;
+                default:
+                    System.out.println("Wrong action!");
+            }
+        } while (!(action.equals("exit")));
 
     }
+
+
 
     @Override
     public void addCard() {
+        System.out.print("The card:\n");
+        do {
+            term = sc.nextLine();
+            if (termDefinition.containsKey(term)) {
+                System.out.println(String.format("The card \"%s\" already exists. Try again:", term));
+            }
+        } while ((termDefinition.containsKey(term)));
 
+        System.out.print("The definition of the card:\n");
+        do {
+            definition = sc.nextLine();
+            if (termDefinition.containsValue(definition)) {
+                System.out.println(String.format("The definition \"%s\" already exists. Try again:", definition));
+            }
+        } while ((termDefinition.containsValue(definition)));
+
+        termDefinition.put(term, definition);
     }
 
     @Override
     public void removeCard() {
-
+        do {
+            System.out.print("The card:\n");
+            term = sc.nextLine();
+            if (termDefinition.containsKey(term)) {
+                System.out.println("The card has been removed.");
+                termDefinition.remove(term);
+                break;
+            } else {
+                System.out.printf("Can't remove \"%s\": there is no such card.", term);
+            }
+        } while (true);
     }
 
     @Override
@@ -110,24 +113,21 @@ class Flashcard extends Game {
 
     @Override
     public void askCard() {
-
+        System.out.println("How many times to ask?");
+        int num = Integer.parseInt(sc.nextLine());
+        for (int i = 0; i < num; i++) {
+            Random random = new Random();
+            term = termDefinition.keySet().toArray()[random.nextInt(termDefinition.keySet().size())].toString();
+            System.out.printf("Print the definition of \"%s\":\n", term);
+            definition = sc.nextLine();
+            answer.add(definition);
+            System.out.println(checkAnswer(definition, term));
+        }
     }
 
     @Override
     public void exit() {
-
-    }
-
-    @Override
-    public void playGame() {
-        int i = 0;
-        for (String term : termDefinition.keySet()) {
-            //iterate over all keys (terms) and check answer
-            System.out.printf("Print the definition of \"%s\":\n", term);
-            answer.add(sc.nextLine());
-            System.out.println(checkAnswer(i,term));
-            i++;
-        }
+        System.out.println("Bye bye!");
     }
 
     private String getTermVal(String s) {
@@ -136,21 +136,19 @@ class Flashcard extends Game {
             if (entry.getValue().equals(s)) {
                 return entry.getKey();
             }
-
         }
-
         return null;
     }
 
-    private String checkAnswer(int i, String term) {
+    private String checkAnswer(String userDefinition, String term) {
         String res = "";
-        if (answer.get(i).equals(termDefinition.get(term))) {
+        if (userDefinition.equals(termDefinition.get(term))) {
             res = "Correct answer.";
         } else {
-            if (termDefinition.containsValue(answer.get(i))) {
+            if (termDefinition.containsValue(userDefinition)) {
                 res = (String.format("Wrong answer. The correct one is \"%s\", you've just written the definition of \"%s\".",
                         termDefinition.get(term),
-                        getTermVal(answer.get(i))));
+                        getTermVal(userDefinition)));
             } else {
                 res = String.format("Wrong answer. The correct one is \"%s\".", termDefinition.get(term));
             }
@@ -158,14 +156,13 @@ class Flashcard extends Game {
         }
         return res;
     }
-
 }
 
 public class Main {
     public static void main(String[] args) {
 
         Flashcard game = new Flashcard();
-        game.gameProcess();
+        game.playGame();
 
     }
 }
