@@ -21,15 +21,36 @@ abstract class Game {
 
     public abstract void exit();
 
+    public abstract void log();
+
+    public abstract void hardestCard();
+
+    public abstract void resetStats();
+
     public abstract void playGame();
 
 }
 
+
 class Flashcard extends Game {
 
-    String action = null;
-    final Scanner sc = new Scanner(System.in);
+    public void printAndAddToLog(String line) {
+        System.out.println(line);
+        log.add(line);
+    }
 
+    public String readAndAddToLog() {
+        final Scanner sc = new Scanner(System.in);
+        String line = sc.nextLine();
+        log.add(line);
+        return line;
+    }
+
+    ArrayList<String> log = new ArrayList<>();
+    String action = null;
+
+
+    Map<String, Integer> errorCount = new LinkedHashMap<>();
     Map<String, String> termDefinition = new LinkedHashMap<>();
     String term;
     String definition;
@@ -38,8 +59,8 @@ class Flashcard extends Game {
     public void playGame() {
 
         do {
-            System.out.println("Input the action (add, remove, import, export, ask, exit):");
-            action = sc.nextLine().toLowerCase();
+            printAndAddToLog("Input the action (add, remove, import, export, ask, exit, log, hardest card, reset stats):");
+            action = readAndAddToLog().toLowerCase();
             switch (action) {
                 case "add":
                     addCard();
@@ -59,98 +80,180 @@ class Flashcard extends Game {
                 case "exit":
                     exit();
                     break;
+                case "log":
+                    log();
+                    break;
+                case "hardest card":
+                    hardestCard();
+                    break;
+                case "reset stats":
+                    resetStats();
+                    break;
                 default:
-                    System.out.println("Wrong action!");
+                    printAndAddToLog("Wrong action!");
             }
         } while (!(action.equals("exit")));
 
     }
 
 
+
     @Override
     public void addCard() {
-        System.out.print("The card:\n");
+        printAndAddToLog("The card:");
 
-        term = sc.nextLine();
+        term = readAndAddToLog();
         if (termDefinition.containsKey(term)) {
-            System.out.println(String.format("The card \"%s\" already exists.", term));
+            printAndAddToLog(String.format("The card \"%s\" already exists.", term));
         } else {
-            System.out.print("The definition of the card:\n");
-            definition = sc.nextLine();
+            printAndAddToLog("The definition of the card:");
+            definition = readAndAddToLog();
             if (termDefinition.containsValue(definition)) {
-                System.out.println(String.format("The definition \"%s\" already exists.", definition));
+                printAndAddToLog(String.format("The definition \"%s\" already exists.", definition));
             } else {
+                errorCount.putIfAbsent(term, 0);
                 termDefinition.put(term, definition);
-                System.out.printf("The pair (\"%s\":\"%s\") has been added.\n", term, definition);
+                printAndAddToLog(String.format("The pair (\"%s\":\"%s\") has been added.", term, definition));
             }
         }
     }
 
     @Override
     public void removeCard() {
-
-            System.out.print("The card:\n");
-            term = sc.nextLine();
-            if (termDefinition.containsKey(term)) {
-                System.out.println("The card has been removed.");
-                termDefinition.remove(term);
-            } else {
-                System.out.printf("Can't remove \"%s\": there is no such card.\n", term);
-            }
+        printAndAddToLog("The card:");
+        term = readAndAddToLog();
+        if (termDefinition.containsKey(term)) {
+            printAndAddToLog("The card has been removed.");
+            termDefinition.remove(term);
+            errorCount.remove(term);
+        } else {
+            printAndAddToLog(String.format("Can't remove \"%s\": there is no such card.", term));
+        }
     }
 
     @Override
     public void importCard() {
-        System.out.println("File name:");
-        String pathToFile = sc.nextLine();
+        printAndAddToLog("File name:");
+        String pathToFile = readAndAddToLog();
         File file = new File(pathToFile);
         int num = 0;
         try (Scanner scanner = new Scanner(file)) {
             while (scanner.hasNext()) {
                 String[] line = scanner.nextLine().split(":");
                 termDefinition.put(line[0], line[1]);
+                if (errorCount.containsKey(line[0])) {
+                    errorCount.put(line[0], Integer.parseInt(line[2]));
+                } else {
+                    errorCount.putIfAbsent(line[0], 0);
+                }
+
+
                 num++;
             }
         } catch (FileNotFoundException e) {
-            System.out.println("File not found.");
+            printAndAddToLog("File not found.");
         }
-        if (num > 0) System.out.printf("%d cards have been loaded.\n", num);
+        if (num > 0) printAndAddToLog(String.format("%d cards have been loaded.", num));
     }
 
     @Override
     public void exportCard() {
-        System.out.println("File name:");
-        String pathToFile = sc.nextLine();
+        printAndAddToLog("File name:");
+        String pathToFile = readAndAddToLog();
         File file = new File(pathToFile);
         int num = 0;
         try (FileWriter writer = new FileWriter(file)) {
             for (var entry : termDefinition.entrySet()) {
-                writer.write(entry.getKey() + ":" + entry.getValue() + "\n");
+                writer.write(entry.getKey() + ":" + entry.getValue() + ":" + errorCount.get(entry.getKey()) + "\n");
                 num++;
             }
         } catch (IOException e) {
-            System.out.printf("An exception occurs %s", e.getMessage());
+            printAndAddToLog(String.format("An exception occurs %s", e.getMessage()));
         }
-        System.out.printf("%d cards have been saved\n", num);
+        printAndAddToLog(String.format("%d cards have been saved", num));
     }
 
     @Override
     public void askCard() {
-        System.out.println("How many times to ask?");
-        int num = Integer.parseInt(sc.nextLine());
+        printAndAddToLog("How many times to ask?");
+        int num = Integer.parseInt(readAndAddToLog());
         for (int i = 0; i < num; i++) {
             Random random = new Random();
             term = termDefinition.keySet().toArray()[random.nextInt(termDefinition.keySet().size())].toString();
-            System.out.printf("Print the definition of \"%s\":\n", term);
-            definition = sc.nextLine();
+            printAndAddToLog(String.format("Print the definition of \"%s\":", term));
+            definition = readAndAddToLog();
             answer.add(definition);
-            System.out.println(checkAnswer(definition, term));
+            printAndAddToLog(checkAnswer(definition, term));
         }
     }
 
     @Override
     public void exit() {
-        System.out.println("Bye bye!");
+        printAndAddToLog("Bye bye!");
+    }
+
+    @Override
+    public void log() {
+        printAndAddToLog("File name:");
+        String pathToFile = readAndAddToLog();
+        File file = new File(pathToFile);
+        try (FileWriter writer = new FileWriter(file)) {
+            for (var entry : log) {
+                writer.write(entry+"\n");
+
+            }
+        } catch (IOException e) {
+            printAndAddToLog(String.format("An exception occurs %s", e.getMessage()));
+        }
+        printAndAddToLog("The log has been saved.");
+    }
+
+    @Override
+    public void hardestCard() {
+        int maxError = 0;
+        int count = 0;
+        StringBuilder res = new StringBuilder();
+        for (int entry : errorCount.values()) {
+            if (entry > maxError) {
+                maxError = entry;
+            }
+        }
+
+        for (int entry : errorCount.values()) {
+            if ((entry == maxError) && (maxError != 0)) count++;
+        }
+
+        if (count < 1) {
+            printAndAddToLog("There are no cards with errors.");
+        } else if (count == 1) {
+            for (var entry : errorCount.entrySet()) {
+                if (entry.getValue() == maxError)
+                    term = entry.getKey();
+            }
+            printAndAddToLog(String.format("The hardest card is \"%s\". You have %d errors answering it.", term , maxError));
+        }
+        else {
+
+            for (var entry : errorCount.entrySet()) {
+                if (entry.getValue() == maxError) {
+                    term = entry.getKey();
+                    res.append(String.format("\"%s\", ", term));
+                }
+            }
+            res.delete(res.length() - 2,res.length());
+            printAndAddToLog(String.format("The hardest cards are %s. You have %d errors answering them.", res.toString(), maxError));
+
+        }
+
+
+
+
+    }
+
+    @Override
+    public void resetStats() {
+        errorCount.replaceAll((e, v) -> 0);
+        printAndAddToLog("Card statistics has been reset.");
     }
 
     private String getTermVal(String s) {
@@ -163,10 +266,11 @@ class Flashcard extends Game {
     }
 
     private String checkAnswer(String userDefinition, String term) {
-        String res = "";
+        String res;
         if (userDefinition.equals(termDefinition.get(term))) {
             res = "Correct answer.";
         } else {
+            errorCount.put(term, errorCount.get(term) + 1);
             if (termDefinition.containsValue(userDefinition)) {
                 res = (String.format("Wrong answer. The correct one is \"%s\", you've just written the definition of \"%s\".",
                         termDefinition.get(term),
