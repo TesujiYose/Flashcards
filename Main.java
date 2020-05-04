@@ -34,6 +34,11 @@ abstract class Game {
 
 class Flashcard extends Game {
 
+    public Flashcard(String[] args) {
+        this.args = args;
+        readParams();
+    }
+
     public void printAndAddToLog(String line) {
         System.out.println(line);
         log.add(line);
@@ -46,9 +51,25 @@ class Flashcard extends Game {
         return line;
     }
 
+    private void readParams() {
+
+        for (int i = 0; i < args.length; i++) {
+            if (args[i].equals("-import")) {
+                String importFilename = args[i + 1];
+                processImportCard(importFilename);
+            }
+            if (args[i].equals("-export")) {
+                exportFilename = args[i + 1];
+                isExport = true;
+            }
+        }
+    }
+
+    String[] args;
     ArrayList<String> log = new ArrayList<>();
     String action = null;
-
+    String exportFilename = "";
+    boolean isExport;
 
     Map<String, Integer> errorCount = new LinkedHashMap<>();
     Map<String, String> termDefinition = new LinkedHashMap<>();
@@ -57,7 +78,6 @@ class Flashcard extends Game {
     ArrayList<String> answer = new ArrayList<>();
 
     public void playGame() {
-
         do {
             printAndAddToLog("Input the action (add, remove, import, export, ask, exit, log, hardest card, reset stats):");
             action = readAndAddToLog().toLowerCase();
@@ -93,10 +113,7 @@ class Flashcard extends Game {
                     printAndAddToLog("Wrong action!");
             }
         } while (!(action.equals("exit")));
-
     }
-
-
 
     @Override
     public void addCard() {
@@ -135,6 +152,10 @@ class Flashcard extends Game {
     public void importCard() {
         printAndAddToLog("File name:");
         String pathToFile = readAndAddToLog();
+        processImportCard(pathToFile);
+    }
+
+    private void processImportCard(String pathToFile) {
         File file = new File(pathToFile);
         int num = 0;
         try (Scanner scanner = new Scanner(file)) {
@@ -146,8 +167,6 @@ class Flashcard extends Game {
                 } else {
                     errorCount.putIfAbsent(line[0], 0);
                 }
-
-
                 num++;
             }
         } catch (FileNotFoundException e) {
@@ -160,6 +179,10 @@ class Flashcard extends Game {
     public void exportCard() {
         printAndAddToLog("File name:");
         String pathToFile = readAndAddToLog();
+        processExportCard(pathToFile);
+    }
+
+    private void processExportCard(String pathToFile) {
         File file = new File(pathToFile);
         int num = 0;
         try (FileWriter writer = new FileWriter(file)) {
@@ -190,6 +213,9 @@ class Flashcard extends Game {
     @Override
     public void exit() {
         printAndAddToLog("Bye bye!");
+        if (isExport) {
+            processExportCard(exportFilename);
+        }
     }
 
     @Override
@@ -242,17 +268,14 @@ class Flashcard extends Game {
             }
             res.delete(res.length() - 2,res.length());
             printAndAddToLog(String.format("The hardest cards are %s. You have %d errors answering them.", res.toString(), maxError));
-
         }
-
-
-
-
     }
 
     @Override
     public void resetStats() {
-        errorCount.replaceAll((e, v) -> 0);
+        for (var entry : errorCount.keySet()) {
+            errorCount.put(entry, 0);
+        }
         printAndAddToLog("Card statistics has been reset.");
     }
 
@@ -266,7 +289,7 @@ class Flashcard extends Game {
     }
 
     private String checkAnswer(String userDefinition, String term) {
-        String res;
+        String res = "";
         if (userDefinition.equals(termDefinition.get(term))) {
             res = "Correct answer.";
         } else {
@@ -285,7 +308,7 @@ class Flashcard extends Game {
 
 public class Main {
     public static void main(String[] args) {
-        Flashcard game = new Flashcard();
+        Flashcard game = new Flashcard(args);
         game.playGame();
     }
 }
