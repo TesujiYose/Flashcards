@@ -273,9 +273,7 @@ class Flashcard extends Game {
 
     @Override
     public void resetStats() {
-        for (var entry : errorCount.keySet()) {
-            errorCount.put(entry, 0);
-        }
+        errorCount.replaceAll((e, v) -> 0);
         printAndAddToLog("Card statistics has been reset.");
     }
 
@@ -289,7 +287,7 @@ class Flashcard extends Game {
     }
 
     private String checkAnswer(String userDefinition, String term) {
-        String res = "";
+        String res;
         if (userDefinition.equals(termDefinition.get(term))) {
             res = "Correct answer.";
         } else {
